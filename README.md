@@ -10,3 +10,6 @@ When a piece attempts to capture another, the game calculates the success and de
 Players are assigned a random character trait: Hero(영웅), Strategist(전략가), or Tyrant(폭군). Heroes's king can move like knights and always win in attack positions and also have a higher chance of successful defense. Strategists have slightly higher probabilities of winning and blocking for all pieces. Tyrants have standard probabilities but can sacrifice their own pieces to guarantee a victory in the next battle via right-click.
 
 The game concludes if a king is captured. Afterward, players can end the game with a left-click or restart with a right-click.
+
+How to play the game
+Click Chess-Chess.exe
