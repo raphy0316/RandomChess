@@ -13,6 +13,7 @@ public class BoardManager : Singleton<BoardManager> {
     public ChessPiece[,] ChessPieces { set; get; }
     private ChessPiece selectedChessPiece;
 
+
     public List<GameObject> chesspiecePrefabs;
 	private List<GameObject> activeChessPiece = new List<GameObject>();
 
@@ -25,8 +26,19 @@ public class BoardManager : Singleton<BoardManager> {
 
 	public bool isBlackTurn = true;
 
+	public bool sacrificed = false;
+	public bool sacrificing = false;
+
+	private Camera subCamera;
+	public Characteristic C;
+
+	public bool finish = false;
+
+
+
 	private void Start()
 	{
+		subCamera = GameObject.FindWithTag ("SubCamera").GetComponent<Camera>();
         MakeTile();
 		SpawnAllChessPieces ();
 	}
@@ -36,7 +48,10 @@ public class BoardManager : Singleton<BoardManager> {
 		UpdateSelection ();
 		SelectedLocate ();
 		if (Input.GetMouseButtonDown (0)) {
-			if (selectX >= 0 && selectY >= 0) {
+			if (finish) {
+				Application.Quit ();
+			}
+			else if (selectX >= 0 && selectY >= 0) {
 				if (selectedChessPiece == null) {
 					SelectChessPiece (selectX, selectY);
 				} else {
@@ -44,7 +59,24 @@ public class BoardManager : Singleton<BoardManager> {
 				}
 			}
 		}
+		else if (Input.GetMouseButtonDown (1)) {
+			if (finish) {
+				restart ();
+				finish = false;
+			}
+			else if (selectX >= 0 && selectY >= 0) {
+				sacrificing = true;
+				SelectChessPiece (selectX, selectY);
+				Sacrifice (selectedChessPiece);
+				sacrificing = false;
+			}
+		}
 	}
+	private void Awake(){
+		Screen.SetResolution (1920, 1080, true);
+		C = GameObject.Find("User").GetComponent ("Characteristic") as Characteristic;
+	}
+
 	private void SelectChessPiece(int x, int y)
 	{
 		if (ChessPieces [x, y] == null)
@@ -52,89 +84,127 @@ public class BoardManager : Singleton<BoardManager> {
 		if (ChessPieces [x, y].isBlack != isBlackTurn)
 			return;
 
+		bool hasAtleastOneMove = false;
 		allowedMoves = ChessPieces [x, y].PossibleMove ();
+		for (int i = 0; i < 8; i++)
+			for (int j = 0; j < 8; j++)
+				if (allowedMoves [i, j])
+					hasAtleastOneMove = true;
+
+		
 
 		selectedChessPiece = ChessPieces [x, y];
-		BoardHighlights.Instance.HighlightAllowedMoves (allowedMoves);
+		if (!sacrificing) {
+			BoardHighlights.Instance.HighlightAllowedMoves (allowedMoves);
+		}
 	}
-    private bool Kill(ChessPiece attackChessPiece, ChessPiece defenceChessPiece)
-    {
-        int r = Random.Range(0, 10);
-        int r2 = Random.Range(0, 10);
-        int a = attackChessPiece.randomAttack;
-        int d = defenceChessPiece.randomDefence;
-        if (r < a)
-        {
-            if (r < d)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            return false;
-        }
-    }
+	public bool Kill(ChessPiece attackChessPiece, ChessPiece defenceChessPiece)
+	{
+		int r = Random.Range(0, 10);
+		attackChessPiece.ChooseStatus (attackChessPiece);
+		defenceChessPiece.ChooseStatus (defenceChessPiece);
+		int a;
+		int d;
+		if (sacrificed || attackChessPiece.GetType () == typeof(King)) {
+			a = 10;
+			d = 0;
+			sacrificed = false;
+		} else {
+			a = attackChessPiece.randomAttack;
+			d = defenceChessPiece.randomDefence;
+		}
+
+		if (r < a)
+		{
+			if (r < d)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
 	private void MoveChessPiece(int x, int y)
 	{
 		if (allowedMoves[x,y]) {
 
-            ChessPiece c = ChessPieces[x, y];
-            bool win = true;
-            if (c != null && c.isBlack != isBlackTurn)
-            {
-                if (c.GetType() == typeof(King))
-                {
-                    //끝
-                    return;
-                }
-                if (Kill(selectedChessPiece, c))
-                {
-                    activeChessPiece.Remove(c.gameObject);
-                    Destroy(c.gameObject);
-                    win = true;
+			ChessPiece c = ChessPieces[x, y];
+			bool win = true;
+			if (c != null && c.isBlack != isBlackTurn)
+			{
+				
+				if (Kill(selectedChessPiece, c))
+				{
+					if (c.GetType() == typeof(King))
+					{
+						EndGame (true);
+					}
+					activeChessPiece.Remove(c.gameObject);
+					Destroy(c.gameObject);
+					win = true;
 
-                }
-                else
-                {
-                    activeChessPiece.Remove(selectedChessPiece.gameObject);
-                    Destroy(selectedChessPiece.gameObject);
-                    win = false;
+				}
+				else
+				{
+					if (selectedChessPiece.GetType() == typeof(King))
+					{
+						EndGame (false);
+					}
+					activeChessPiece.Remove(selectedChessPiece.gameObject);
+					Destroy(selectedChessPiece.gameObject);
+					win = false;
 
-                }
+				}
 
 
-            }
-            if (win)
-            {
-                ChessPieces[selectedChessPiece.nowX, selectedChessPiece.nowY] = null;
-                selectedChessPiece.transform.position = GetTileLocate(x, y);
-                selectedChessPiece.SetPosition(x, y);
+			}
+			if (win)
+			{
+				ChessPieces[selectedChessPiece.nowX, selectedChessPiece.nowY] = null;
+				selectedChessPiece.transform.position = GetTileLocate(x, y);
+				selectedChessPiece.SetPosition(x, y);
 
-                ChessPieces[x, y] = selectedChessPiece;
-            }
+				ChessPieces[x, y] = selectedChessPiece;
+			}
+			if (!finish) {
+				isBlackTurn = !isBlackTurn;
+			}
 
-            isBlackTurn = !isBlackTurn;
-        }
+		}
 		BoardHighlights.Instance.HideAllhighlights ();
 		selectedChessPiece = null;
 	}
 	private void UpdateSelection()
 	{
-		if (!Camera.main)
-			return;
-		RaycastHit hit;
-		if (Physics.Raycast (Camera.main.ScreenPointToRay (Input.mousePosition), out hit, 25.0f, LayerMask.GetMask ("ChessPlane"))) {
-			selectX = (int)hit.point.x;
-			selectY = (int)hit.point.z;
+		if (isBlackTurn) {
+			RaycastHit hit;
+			if (Physics.Raycast (Camera.main.ScreenPointToRay (Input.mousePosition), out hit, 25.0f, LayerMask.GetMask ("ChessPlane"))) {
+				selectX = (int)hit.point.x;
+				selectY = (int)hit.point.z;
+			} else {
+				selectX = -1;
+				selectY = -1;
+			}
 		} else {
-			selectX = -1;
-			selectY = -1;
+			RaycastHit hit;
+			if (Physics.Raycast (subCamera.ScreenPointToRay (Input.mousePosition), out hit, 25.0f, LayerMask.GetMask ("ChessPlane"))) {
+				selectX = (int)hit.point.x;
+				selectY = (int)hit.point.z;
+			} else {
+				selectX = -1;
+				selectY = -1;
+			}
+
+
+
 		}
+
 	}
 	private void SpawnChessPiece(int index, int x, int y,char color)
 	{
@@ -149,6 +219,23 @@ public class BoardManager : Singleton<BoardManager> {
 		ChessPieces [x, y] = ob.GetComponent<ChessPiece> ();
 		ChessPieces [x, y].SetPosition (x, y);
 		activeChessPiece.Add (ob);
+	}
+
+	public void Sacrifice(ChessPiece c){
+		int Character;
+
+		if (c.isBlack) {
+			Character = C.BCharacter;
+		} else {
+			Character = C.WCharacter;
+		}
+		if (Character == 1) {
+			activeChessPiece.Remove(c.gameObject);
+			Destroy(c.gameObject);
+			sacrificed = true;
+			selectX = -1;
+			selectY = -1;
+		}
 	}
 
 	private void SpawnAllChessPieces()
@@ -226,4 +313,31 @@ public class BoardManager : Singleton<BoardManager> {
     { 
         tile = Instantiate(BoardHighlights.Instance.highlightPrefab);
     }
+	private void EndGame(bool result){
+		if (isBlackTurn) {
+			if (result == isBlackTurn)
+				Debug.Log ("Black team wins");
+			else
+				Debug.Log ("white team wins");
+		} else {
+			if (result == isBlackTurn)
+				Debug.Log ("White team wins");
+			else
+				Debug.Log ("Black team wins");
+		}
+
+		finish = true;
+
+
+	}
+	private void restart(){
+		foreach (GameObject ob in activeChessPiece)
+			Destroy (ob);
+		C.ChooseCharacter ();
+
+		isBlackTurn = true;
+		BoardHighlights.Instance.HideAllhighlights ();
+		SpawnAllChessPieces ();
+
+	}
 }

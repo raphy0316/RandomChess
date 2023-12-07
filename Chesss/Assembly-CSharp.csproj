@@ -65,7 +65,6 @@
     <Compile Include="Assets\Script\Bishop.cs" />
     <Compile Include="Assets\Script\BoardHighlights.cs" />
     <Compile Include="Assets\Script\BoardManager.cs" />
-    <Compile Include="Assets\Script\Characteristic.cs" />
     <Compile Include="Assets\Script\ChessPiece.cs" />
     <Compile Include="Assets\Script\King.cs" />
     <Compile Include="Assets\Script\Knight.cs" />
@@ -73,13 +72,12 @@
     <Compile Include="Assets\Script\Queen.cs" />
     <Compile Include="Assets\Script\Rook.cs" />
     <Compile Include="Assets\Script\Singleton.cs" />
-    <Compile Include="Assets\Script\User.cs" />
     <None Include="Assets\Arcane Cyber\Chess\readme.txt" />
     <Reference Include="UnityEditor.StandardEvents">
-      <HintPath>C:/Users/오현택/Desktop/6_15_오현택_Chesss/Chesss/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
+      <HintPath>C:/Users/오현택/Desktop/6_15_오현택_Funny Chess/Chesss/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>
     <Reference Include="Unity.PackageManagerUI.Editor">
-      <HintPath>C:/Users/오현택/Desktop/6_15_오현택_Chesss/Chesss/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll</HintPath>
+      <HintPath>C:/Users/오현택/Desktop/6_15_오현택_Funny Chess/Chesss/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AIModule">
       <HintPath>D:/soft/Editor/Data/Managed/UnityEngine/UnityEngine.AIModule.dll</HintPath>
