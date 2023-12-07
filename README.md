@@ -11,5 +11,5 @@ Players are assigned a random character trait: Hero(영웅), Strategist(전략�
 
 The game concludes if a king is captured. Afterward, players can end the game with a left-click or restart with a right-click.
 
-How to play the game
+How to play the game <br>
 Click Chess-Chess.exe
